@@ -10,6 +10,7 @@ public class Player : MonoBehaviour
 
     public float speed;
     public float gravity;
+    public float damage = 20;
 
     private Animator anim;
 
@@ -123,7 +124,12 @@ public class Player : MonoBehaviour
 
         foreach (Transform e in enemyList)
         {
-            Debug.Log(e.name);
+            CombatEnemy enemy = e.GetComponent<CombatEnemy>();
+
+            if (enemy != null)
+            {
+                enemy.GetHit(damage);
+            }
         }
 
         yield return new WaitForSeconds(1f);
