@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using Random = UnityEngine.Random;
 
 public class CombatEnemy : MonoBehaviour
 {
@@ -30,8 +31,15 @@ public class CombatEnemy : MonoBehaviour
     private bool hiting;
     
     private bool waitFor;
-    
-    
+    private bool playerIsDead;
+
+    [Header("WayPoints")] 
+    public List<Transform> wayPoints = new List<Transform>();
+
+    public int currentPathIndex;
+    public float pathDistance;
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -74,17 +82,37 @@ public class CombatEnemy : MonoBehaviour
             }
             else
             {
-                agent.isStopped = true;
+                //agent.isStopped = true;
                 anim.SetBool("Walk Forward", false);
                 walking = false;
                 attacking = false;
+                MoveToWayPoint();
             }
+        }
+    }
+
+    void MoveToWayPoint()
+    {
+        if (wayPoints.Count > 0)
+        {
+            float distance = Vector3.Distance(wayPoints[currentPathIndex].position, transform.position);
+            agent.destination = wayPoints[currentPathIndex].position;
+
+            if (distance <= pathDistance)
+            {
+                //parte para o proximo ponto
+                currentPathIndex = Random.Range(0, wayPoints.Count); 
+            }
+            
+            anim.SetBool("Walk Forward", true);
+            walking = true;
+            
         }
     }
     
     IEnumerator Attack()
     {
-        if (!waitFor && !hiting)
+        if (!waitFor && !hiting && !playerIsDead)
         {
             waitFor = true;
             attacking = true;
@@ -96,8 +124,16 @@ public class CombatEnemy : MonoBehaviour
             //yield return new WaitForSeconds(1f);
             waitFor = false;
         }
-        
-        
+
+        if (playerIsDead)
+        {
+            anim.SetBool("Walk Forward", false);
+            anim.SetBool("Bite Attack", false);
+            walking = false;
+            attacking = false;
+            agent.isStopped = true;
+        }
+
     }
 
     void GetPlayer()
@@ -108,6 +144,8 @@ public class CombatEnemy : MonoBehaviour
             if(c.gameObject.CompareTag("Player"))
             {
                 //aplicar dano 
+                c.gameObject.GetComponent<Player>().GetHit(attackDamage);
+                playerIsDead = c.gameObject.GetComponent<Player>().isDead;
             }
         }
     }
